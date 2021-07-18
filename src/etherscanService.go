@@ -15,7 +15,7 @@ func getBlockByTag(tag string) Block {
 		tag = tag[:len(tag)-1]
 	}
 request:
-	url := fmt.Sprintf("https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=%s&boolean=true&apikey=8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T", tag)
+	url := fmt.Sprintf("https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=%s&boolean=true&apikey=%s", tag, API_KEY)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -51,8 +51,9 @@ request:
 }
 
 func getLastBlockNumber() string {
+	url := fmt.Sprintf("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=%s", API_KEY)
 request:
-	resp, err := http.Get("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T")
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
