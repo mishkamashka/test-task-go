@@ -7,24 +7,29 @@ import (
 	"net/http"
 )
 
-func getBlock() Block {
-	resp, err := http.Get("https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=0xc3981b&boolean=true")
+func getBlockByTag(tag string) Block {
+	url := fmt.Sprintf("https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=%s&boolean=true", tag)
+	resp, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		fmt.Print(err)
 	}
-	var block Block
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Print(err)
+	}
 
 	var data map[string]interface{}
 	err = json.Unmarshal([]byte(body), &data)
 
+	block := Block{}
+	if _, ok := data["status"]; ok {
+		fmt.Println("tag not valid / too many requests for one tag per 5 minutes\ntag: ", tag)
+		return block
+	}
 	s := data["result"]
-	//err = json.Unmarshal(b, &block)
-
 	jsonString, _ := json.Marshal(s)
-	fmt.Print(jsonString)
 	json.Unmarshal(jsonString, &block)
 
 	return block
@@ -60,7 +65,7 @@ func getSampleBlock() Block {
 	return block
 }
 
-func getLastBlock() string {
+func getLastBlockNumber() string {
 	resp, err := http.Get("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber")
 	if err != nil {
 		panic(err)
@@ -70,6 +75,11 @@ func getLastBlock() string {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal([]byte(body), &data)
+
+	if _, ok := data["status"]; ok {
+		fmt.Println("Max rate limit reached (requests to 1 url per 3-5 minutes)")
+		return ""
+	}
 
 	return data["result"]
 }

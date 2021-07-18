@@ -7,7 +7,6 @@ type Transaction struct {
 	BlockNumber	string 	`json:"block_number"`
 
 	//blockHash string
-	//blockNumber string
 	//gas string
 	//gasPrice string
 	//hash string
