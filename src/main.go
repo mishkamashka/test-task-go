@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/holiman/uint256"
 	"hash/fnv"
+	"log"
 	"strconv"
 	"time"
 )
@@ -22,6 +23,7 @@ var balances = make(map[uint32]*uint256.Int)
 
 func main(){
 	start := time.Now()
+	bufValue := uint256.NewInt(0)
 
 	lastBlockNumber := getLastBlockNumber()
 	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
@@ -31,26 +33,20 @@ func main(){
 
 	for i := last - 99; i <= last; i++ {
 		curTag := fmt.Sprintf("0x%x\n", i)
-
-		//need to sleep here or smth 'cause max rate limit hits "5 calls per sec/IP" (c) docs <- for registered accounts, with API key
-		//time.Sleep(5 * time.Second)
 		curBlock := getBlockByTag(curTag)
 
 		for _, transaction := range curBlock.Transactions {
-			bufValue := uint256.NewInt(0)
 			curFromAddr := hash(transaction.From)
 			curToAddr := hash(transaction.To)
 			curValue, err := uint256.FromHex(transaction.Value)
 			if err != nil {
 				panic(err)
 			}
-
 			//fmt.Println("from: ", curFromAddr, " to: ", curToAddr,  " value: ", curValue)
 
 			if curValue.IsZero() {
 				continue
 			}
-
 			// should addresses be added before or after zero check?
 			if _, ok := addresses[curFromAddr]; !ok {
 				addresses[curFromAddr] = transaction.From
@@ -63,7 +59,7 @@ func main(){
 				bufValue.Add(balances[curFromAddr], curValue)
 				balances[curFromAddr] = bufValue
 			} else {
-				//curValue.Neg(curValue)
+				// neg and subtraction if abs change is something else
 				balances[curFromAddr] = curValue
 			}
 
@@ -74,18 +70,29 @@ func main(){
 				balances[curToAddr] = curValue
 			}
 		}
-
 	}
 
-	fmt.Println(len(balances))
-	//for m,n := range balances {
-	//	fmt.Println(m, ":  ", n)
-	//}
+	log.Println("Total addresses count: ", len(balances))
 
 	elapsed := time.Since(start)
-	fmt.Printf("Time %s", elapsed)
-}
+	log.Printf("Time1 %s\n", elapsed)
 
+	bufValue = uint256.NewInt(0)
+	var maxAddr uint32 = 0
+
+	bufValue.Cmp(bufValue)
+
+	for address, value := range balances {
+		if value.Cmp(bufValue) == 1 {
+			bufValue = value
+			maxAddr = address
+		}
+	}
+
+	log.Println("Most changes: ", addresses[maxAddr])
+	elapsed = time.Since(start)
+	log.Printf("Time2 %s", elapsed)
+}
 
 func hash(s string) uint32 {
 	h := fnv.New32a()

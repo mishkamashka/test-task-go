@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -16,13 +18,13 @@ request:
 	url := fmt.Sprintf("https://api.etherscan.io/api?module=proxy&action=eth_getBlockByNumber&tag=%s&boolean=true&apikey=8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T", tag)
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal(err)
 	}
 
 	var data map[string]interface{}
@@ -30,16 +32,50 @@ request:
 
 	block := Block{}
 	if _, ok := data["status"]; ok {
-		fmt.Println(data["result"], "\ntag ", tag, "\ntry again in 1 sec")
-		//todo probably not the best solution, change
-		time.Sleep(1 * time.Second)
-		goto request
+		res := fmt.Sprintf("%s", data["result"])
+		if strings.Contains(res, "Max") {
+			log.Println(data["result"], "\ntag ", tag, "\ntry again in 1 sec")
+			// todo probably not the best solution, change
+			time.Sleep(1 * time.Second)
+			goto request
+		} else {
+			log.Fatal(data)
+			return block
+		}
 	}
 	s := data["result"]
 	jsonString, _ := json.Marshal(s)
 	json.Unmarshal(jsonString, &block)
 
 	return block
+}
+
+func getLastBlockNumber() string {
+request:
+	resp, err := http.Get("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var data map[string]string
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal([]byte(body), &data)
+
+	if _, ok := data["status"]; ok {
+		res := fmt.Sprintf("%s", data["result"])
+		if strings.Contains(res, "Max") {
+			log.Println("Max rate limit reached")
+			//todo probably not the best solution, change
+			time.Sleep(1 * time.Second)
+			goto request
+		} else {
+			log.Fatal(data)
+			return ""
+		}
+	}
+
+	return data["result"]
 }
 
 func getSampleBlock() Block {
@@ -58,26 +94,4 @@ func getSampleBlock() Block {
 	json.Unmarshal([]byte(s), &block)
 
 	return block
-}
-
-func getLastBlockNumber() string {
-request:
-	resp, err := http.Get("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T")
-	if err != nil {
-		panic(err)
-	}
-	var data map[string]string
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal([]byte(body), &data)
-
-	if _, ok := data["status"]; ok {
-		fmt.Println("Max rate limit reached")
-		//todo probably not the best solution, change
-		time.Sleep(1 * time.Second)
-		goto request
-	}
-
-	return data["result"]
 }
