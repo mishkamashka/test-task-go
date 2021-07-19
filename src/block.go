@@ -1,4 +1,4 @@
-package testmod
+package main
 
 type Block struct {
 	Number string				`json:"number"`

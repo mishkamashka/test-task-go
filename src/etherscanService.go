@@ -1,4 +1,4 @@
-package testmod
+package main
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ request:
 	if _, ok := data["status"]; ok {
 		res := fmt.Sprintf("%s", data["result"])
 		if strings.Contains(res, "Max") {
-			log.Println(data["result"], "\ntag ", tag, "\ntry again in 1 sec")
+			log.Println(data["result"], "\ntag: ", tag, "\nwill try again in 1 sec")
 			// todo probably not the best solution, change
 			time.Sleep(1 * time.Second)
 			goto request

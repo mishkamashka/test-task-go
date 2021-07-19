@@ -1,4 +1,4 @@
-package testmod
+package main
 
 import (
 	"fmt"
@@ -9,21 +9,13 @@ import (
 	"time"
 )
 
-// Напиши программу, которая выдаст адрес,
-// баланс которого изменился больше остальных
-// (по абсолютной величине) за последние 100 блоков.
-
-// что за адрес нужно отслеживать - адрес отправителя, получателя? оба? повторяются ли транзакции для отправителя/получателя?
-
-// изменение по абсолютной величине - это просто сумма всех именений без учета знака?
-// т.е. здесь: +4, -3, -2 абсолютное изменение это 9 или -1?
-
 var addresses = make(map[uint32]string)
 var balances = make(map[uint32]*uint256.Int)
 
 func main(){
 	start := time.Now()
 	bufValue := uint256.NewInt(0)
+	log.Println("Program has started\nFetching last blocks...")
 
 	lastBlockNumber := getLastBlockNumber()
 	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
@@ -47,7 +39,6 @@ func main(){
 			if curValue.IsZero() {
 				continue
 			}
-			// should addresses be added before or after zero check?
 			if _, ok := addresses[curFromAddr]; !ok {
 				addresses[curFromAddr] = transaction.From
 			}
@@ -70,12 +61,16 @@ func main(){
 				balances[curToAddr] = curValue
 			}
 		}
+
+		if (last - 100 - i) % 20 == 0 {
+			log.Println("20 blocks processed")
+		}
 	}
 
 	log.Println("Total addresses count: ", len(balances))
 
 	elapsed := time.Since(start)
-	log.Printf("Time1 %s\n", elapsed)
+	log.Printf("Time %s\n", elapsed)
 
 	bufValue = uint256.NewInt(0)
 	var maxAddr uint32 = 0
@@ -89,13 +84,14 @@ func main(){
 		}
 	}
 
-	log.Println("Most changes: ", addresses[maxAddr])
-	elapsed = time.Since(start)
-	log.Printf("Time2 %s", elapsed)
+	log.Println("Address with most changes: ", addresses[maxAddr])
 }
 
 func hash(s string) uint32 {
 	h := fnv.New32a()
-	h.Write([]byte(s))
+	_, err := h.Write([]byte(s))
+	if err != nil {
+		log.Fatal(err)
+	}
 	return h.Sum32()
 }
