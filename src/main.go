@@ -12,7 +12,14 @@ import (
 var addresses = make(map[uint32]string)
 var balances = make(map[uint32]*uint256.Int)
 
-func main(){
+// "баланс которого изменился больше остальных (по абсолютной величине) за последние 100 блоков"
+// пусть до начала работы есть balance A и B. Дальше происходит:
+// A + x1 + x2 + x3 + x4 = A1
+// B + y1 + y2 + y3 = B1
+
+// Надо сравнивать A1-A и B1-B или x1+x2+x3+x4 и y1+y2+y3?
+
+func main() {
 	start := time.Now()
 	bufValue := uint256.NewInt(0)
 	log.Println("Program has started\nFetching last blocks...")
@@ -62,7 +69,7 @@ func main(){
 			}
 		}
 
-		if (last - 100 - i) % 20 == 0 {
+		if (last-100-i)%20 == 0 {
 			log.Println("20 blocks processed")
 		}
 	}
