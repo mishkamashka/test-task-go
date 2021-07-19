@@ -5,34 +5,30 @@ import (
 	"github.com/holiman/uint256"
 	"hash/fnv"
 	"log"
-	"strconv"
-	"time"
 )
 
-var addresses = make(map[uint32]string)
-var balances = make(map[uint32]*uint256.Int)
 
-// "баланс которого изменился больше остальных (по абсолютной величине) за последние 100 блоков"
-// пусть до начала работы есть balance A и B. Дальше происходит:
-// A + x1 + x2 + x3 + x4 = A1
-// B + y1 + y2 + y3 = B1
 
-// Надо сравнивать A1-A и B1-B или x1+x2+x3+x4 и y1+y2+y3?
+// запоминать последний знак, если другой, то вычитаем, если тот же, то просто складываем
+// знак зависит от того, from или to
 
 func main() {
-	start := time.Now()
+	//start := time.Now()
+	var addresses = make(map[uint32]string)
+	var balances = make(map[uint32]*Counter)
 	bufValue := uint256.NewInt(0)
-	log.Println("Program has started\nFetching last blocks...")
-
-	lastBlockNumber := getLastBlockNumber()
-	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	for i := last - 99; i <= last; i++ {
-		curTag := fmt.Sprintf("0x%x\n", i)
-		curBlock := getBlockByTag(curTag)
+	//log.Println("Program has started\nFetching last blocks...")
+	//
+	//lastBlockNumber := getLastBlockNumber()
+	//last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//for i := last - 99; i <= last; i++ {
+	//	curTag := fmt.Sprintf("0x%x\n", i)
+	//	curBlock := getBlockByTag(curTag)
+		curBlock := getSampleBlock()
 
 		for _, transaction := range curBlock.Transactions {
 			curFromAddr := hash(transaction.From)
@@ -53,40 +49,60 @@ func main() {
 				addresses[curToAddr] = transaction.To
 			}
 
-			if _, ok := balances[curFromAddr]; ok {
-				bufValue.Add(balances[curFromAddr], curValue)
-				balances[curFromAddr] = bufValue
+			// тут вычитается
+			if counter, ok := balances[curFromAddr]; ok {
+				bufValue = curValue
+				if counter.lastSign {	//if last operation was addition
+					// todo сравнить больше - cur или counter.value - Neg(меньший)
+					bufValue.Neg(curValue)
+				}
+				bufValue.Add(counter.value, bufValue)
+				counter.value = bufValue
+				counter.lastSign = false
 			} else {
-				// neg and subtraction if abs change is something else
-				balances[curFromAddr] = curValue
+				balances[curFromAddr] = NewCounter(curValue.Clone(), false)
 			}
 
-			if _, ok := balances[curToAddr]; ok {
-				bufValue.Add(balances[curToAddr], curValue)
-				balances[curToAddr] = bufValue
+			// тут прибавляется
+			if counter, ok := balances[curToAddr]; ok {
+				bufValue = curValue
+				if !counter.lastSign {	//if last operation was subtraction
+					// todo сравнить больше - cur или counter.value - Neg(меньший)
+					bufValue.Neg(curValue)
+				}
+				bufValue.Add(counter.value, bufValue)
+				counter.value = bufValue
+				counter.lastSign = true
 			} else {
-				balances[curToAddr] = curValue
+				balances[curToAddr] = NewCounter(curValue.Clone(), true)
 			}
 		}
 
-		if (last-100-i)%20 == 0 {
-			log.Println("20 blocks processed")
-		}
-	}
+	//	if (last-100-i)%20 == 0 {
+	//		log.Println("20 blocks processed")
+	//	}
+	//}
 
 	log.Println("Total addresses count: ", len(balances))
+	for m,n := range balances {
+		fmt.Println("ad: ", m, " val: ", n.value)
+	}
 
-	elapsed := time.Since(start)
-	log.Printf("Time %s\n", elapsed)
+	for m,n := range addresses {
+		fmt.Println(m, ": ", n)
+	}
+
+	//elapsed := time.Since(start)
+	//log.Printf("Time %s\n", elapsed)
 
 	bufValue = uint256.NewInt(0)
 	var maxAddr uint32 = 0
 
 	bufValue.Cmp(bufValue)
 
-	for address, value := range balances {
-		if value.Cmp(bufValue) == 1 {
-			bufValue = value
+	for address, counter := range balances {
+		if counter.value.Cmp(bufValue) == 1 {
+			bufValue = counter.value
 			maxAddr = address
 		}
 	}
