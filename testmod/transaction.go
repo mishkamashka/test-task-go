@@ -1,4 +1,4 @@
-package main
+package testmod
 
 type Transaction struct {
 	From		string	`json:"from"`

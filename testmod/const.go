@@ -1,3 +1,3 @@
-package main
+package testmod
 
 const API_KEY = "8FMZ3ADCFS5JFX6JBMTY6P71C2I1UMB43T"
