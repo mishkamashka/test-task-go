@@ -11,7 +11,6 @@ func main() {
 	//start := time.Now()
 	var addresses = make(map[uint32]string)
 	var balances = make(map[uint32]*Counter)
-	//bufValue := uint256.NewInt(0)
 	//log.Println("Program has started\nFetching last blocks...")
 	//
 	//lastBlockNumber := getLastBlockNumber()
@@ -44,9 +43,10 @@ func main() {
 				addresses[curToAddr] = transaction.To
 			}
 
+			//bufValue := *curValue
 			// тут вычитается
 			if counter, ok := balances[curFromAddr]; ok {
-				bufValue1 := curValue.Clone()
+				bufValue1 := *curValue
 				if counter.lastSign {	//if last operation was addition
 					if curValue.Cmp(counter.value) == 1 {
 						counter.value.Neg(counter.value)
@@ -54,28 +54,28 @@ func main() {
 						bufValue1.Neg(curValue)
 					}
 				}
-				bufValue1.Add(counter.value, bufValue1)
-				counter.value = bufValue1
+				bufValue1.Add(counter.value, &bufValue1)
+				counter.value = &bufValue1
 				counter.lastSign = false
 			} else {
-				balances[curFromAddr] = NewCounter(curValue.Clone(), false)
+				balances[curFromAddr] = NewCounter(*curValue, false)
 			}
 
 			// тут прибавляется
 			if counter, ok := balances[curToAddr]; ok {
-				bufValue2 := curValue.Clone()
-				if !counter.lastSign {	//if last operation was addition
+				bufValue2 := *curValue
+				if !counter.lastSign {	//if last operation was subtraction
 					if curValue.Cmp(counter.value) == 1 {
 						counter.value.Neg(counter.value)
 					} else {
 						bufValue2.Neg(curValue)
 					}
 				}
-				bufValue2.Add(counter.value, bufValue2)
-				counter.value = bufValue2
+				bufValue2.Add(counter.value, &bufValue2)
+				counter.value = &bufValue2
 				counter.lastSign = true
 			} else {
-				balances[curToAddr] = NewCounter(curValue.Clone(), true)
+				balances[curToAddr] = NewCounter(*curValue, true)
 			}
 		}
 
@@ -96,11 +96,9 @@ func main() {
 	//elapsed := time.Since(start)
 	//log.Printf("Time %s\n", elapsed)
 
-	bufValue := uint256.NewInt(0)
+
 	var maxAddr uint32 = 0
-
-	bufValue.Cmp(bufValue)
-
+	bufValue := uint256.NewInt(0)
 	for address, counter := range balances {
 		if counter.value.Cmp(bufValue) == 1 {
 			bufValue = counter.value

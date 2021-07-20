@@ -7,9 +7,9 @@ type Counter struct {
 	lastSign	bool			//true +, false -
 }
 
-func NewCounter(v *uint256.Int, sign bool) *Counter {
+func NewCounter(v uint256.Int, sign bool) *Counter {
 	return &Counter{
-		value:    v,
+		value:    &v,
 		lastSign: sign,
 	}
 }
