@@ -5,24 +5,23 @@ import (
 	"github.com/holiman/uint256"
 	"hash/fnv"
 	"log"
+	"strconv"
 )
 
 func main() {
-	//start := time.Now()
 	var addresses = make(map[uint32]string)
 	var balances = make(map[uint32]*Counter)
-	//log.Println("Program has started\nFetching last blocks...")
-	//
-	//lastBlockNumber := getLastBlockNumber()
-	//last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for i := last - 99; i <= last; i++ {
-	//	curTag := fmt.Sprintf("0x%x\n", i)
-	//	curBlock := getBlockByTag(curTag)
-		curBlock := getSampleBlock()
+	log.Println("Program has started\nFetching last blocks...")
+
+	lastBlockNumber := getLastBlockNumber()
+	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := last - 99; i <= last; i++ {
+		curTag := fmt.Sprintf("0x%x\n", i)
+		curBlock := getBlockByTag(curTag)
 
 		for _, transaction := range curBlock.Transactions {
 			curFromAddr := hash(transaction.From)
@@ -31,11 +30,11 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			//fmt.Println("from: ", curFromAddr, " to: ", curToAddr,  " value: ", curValue)
 
 			if curValue.IsZero() {
 				continue
 			}
+
 			if _, ok := addresses[curFromAddr]; !ok {
 				addresses[curFromAddr] = transaction.From
 			}
@@ -43,11 +42,9 @@ func main() {
 				addresses[curToAddr] = transaction.To
 			}
 
-			//bufValue := *curValue
-			// тут вычитается
 			if counter, ok := balances[curFromAddr]; ok {
 				bufValue1 := *curValue
-				if counter.lastSign {	//if last operation was addition
+				if counter.lastSign { //if last operation was addition
 					if curValue.Cmp(counter.value) == 1 {
 						counter.value.Neg(counter.value)
 					} else {
@@ -61,10 +58,9 @@ func main() {
 				balances[curFromAddr] = NewCounter(*curValue, false)
 			}
 
-			// тут прибавляется
 			if counter, ok := balances[curToAddr]; ok {
 				bufValue2 := *curValue
-				if !counter.lastSign {	//if last operation was subtraction
+				if !counter.lastSign { //if last operation was subtraction
 					if curValue.Cmp(counter.value) == 1 {
 						counter.value.Neg(counter.value)
 					} else {
@@ -79,23 +75,12 @@ func main() {
 			}
 		}
 
-	//	if (last-100-i)%20 == 0 {
-	//		log.Println("20 blocks processed")
-	//	}
-	//}
+		if (last-100-i)%20 == 0 {
+			log.Println("20 blocks processed")
+		}
+	}
 
 	log.Println("Total addresses count: ", len(balances))
-	for m,n := range balances {
-		fmt.Println("ad: ", m, " val: ", n.value)
-	}
-
-	for m,n := range addresses {
-		fmt.Println(m, ": ", n)
-	}
-
-	//elapsed := time.Since(start)
-	//log.Printf("Time %s\n", elapsed)
-
 
 	var maxAddr uint32 = 0
 	bufValue := uint256.NewInt(0)
@@ -106,7 +91,7 @@ func main() {
 		}
 	}
 
-	log.Println("Address with most changes: ", addresses[maxAddr])
+	log.Println("Address with most changed balance: ", addresses[maxAddr])
 }
 
 func hash(s string) uint32 {

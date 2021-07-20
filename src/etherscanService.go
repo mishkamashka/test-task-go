@@ -34,8 +34,7 @@ request:
 	if _, ok := data["status"]; ok {
 		res := fmt.Sprintf("%s", data["result"])
 		if strings.Contains(res, "Max") {
-			log.Println(data["result"], "\ntag: ", tag, "\nwill try again in 1 sec")
-			// todo probably not the best solution, change
+			log.Println(data["result"], "with tag:", tag, ", will try again in 1 sec")
 			time.Sleep(1 * time.Second)
 			goto request
 		} else {
@@ -67,7 +66,6 @@ request:
 		res := fmt.Sprintf("%s", data["result"])
 		if strings.Contains(res, "Max") {
 			log.Println("Max rate limit reached")
-			//todo probably not the best solution, change
 			time.Sleep(1 * time.Second)
 			goto request
 		} else {
@@ -75,7 +73,6 @@ request:
 			return ""
 		}
 	}
-
 	return data["result"]
 }
 
