@@ -7,16 +7,11 @@ import (
 	"log"
 )
 
-
-
-// запоминать последний знак, если другой, то вычитаем, если тот же, то просто складываем
-// знак зависит от того, from или to
-
 func main() {
 	//start := time.Now()
 	var addresses = make(map[uint32]string)
 	var balances = make(map[uint32]*Counter)
-	bufValue := uint256.NewInt(0)
+	//bufValue := uint256.NewInt(0)
 	//log.Println("Program has started\nFetching last blocks...")
 	//
 	//lastBlockNumber := getLastBlockNumber()
@@ -51,13 +46,16 @@ func main() {
 
 			// тут вычитается
 			if counter, ok := balances[curFromAddr]; ok {
-				bufValue = curValue
+				bufValue1 := curValue.Clone()
 				if counter.lastSign {	//if last operation was addition
-					// todo сравнить больше - cur или counter.value - Neg(меньший)
-					bufValue.Neg(curValue)
+					if curValue.Cmp(counter.value) == 1 {
+						counter.value.Neg(counter.value)
+					} else {
+						bufValue1.Neg(curValue)
+					}
 				}
-				bufValue.Add(counter.value, bufValue)
-				counter.value = bufValue
+				bufValue1.Add(counter.value, bufValue1)
+				counter.value = bufValue1
 				counter.lastSign = false
 			} else {
 				balances[curFromAddr] = NewCounter(curValue.Clone(), false)
@@ -65,13 +63,16 @@ func main() {
 
 			// тут прибавляется
 			if counter, ok := balances[curToAddr]; ok {
-				bufValue = curValue
-				if !counter.lastSign {	//if last operation was subtraction
-					// todo сравнить больше - cur или counter.value - Neg(меньший)
-					bufValue.Neg(curValue)
+				bufValue2 := curValue.Clone()
+				if !counter.lastSign {	//if last operation was addition
+					if curValue.Cmp(counter.value) == 1 {
+						counter.value.Neg(counter.value)
+					} else {
+						bufValue2.Neg(curValue)
+					}
 				}
-				bufValue.Add(counter.value, bufValue)
-				counter.value = bufValue
+				bufValue2.Add(counter.value, bufValue2)
+				counter.value = bufValue2
 				counter.lastSign = true
 			} else {
 				balances[curToAddr] = NewCounter(curValue.Clone(), true)
@@ -95,7 +96,7 @@ func main() {
 	//elapsed := time.Since(start)
 	//log.Printf("Time %s\n", elapsed)
 
-	bufValue = uint256.NewInt(0)
+	bufValue := uint256.NewInt(0)
 	var maxAddr uint32 = 0
 
 	bufValue.Cmp(bufValue)
