@@ -4,7 +4,7 @@ import "github.com/holiman/uint256"
 
 type Counter struct {
 	value		*uint256.Int
-	lastSign	bool			//true +, false -
+	lastSign	bool		//true +, false -
 }
 
 func NewCounter(v uint256.Int, sign bool) *Counter {
