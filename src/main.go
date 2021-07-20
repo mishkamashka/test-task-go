@@ -8,11 +8,11 @@ import (
 	"strconv"
 )
 
-func main() {
-	var addresses = make(map[uint32]string)
-	var balances = make(map[uint32]*Counter)
-	log.Println("Program has started\nFetching last blocks...")
+var addresses = make(map[uint32]string)
+var balances = make(map[uint32]*Counter)
 
+func main() {
+	log.Println("Program has started\nFetching last blocks...")
 	lastBlockNumber := getLastBlockNumber()
 	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
 	if err != nil {
@@ -22,7 +22,6 @@ func main() {
 	for i := last - 99; i <= last; i++ {
 		curTag := fmt.Sprintf("0x%x\n", i)
 		curBlock := getBlockByTag(curTag)
-
 		for _, transaction := range curBlock.Transactions {
 			curFromAddr := hash(transaction.From)
 			curToAddr := hash(transaction.To)
@@ -34,7 +33,6 @@ func main() {
 			if curValue.IsZero() {
 				continue
 			}
-
 			if _, ok := addresses[curFromAddr]; !ok {
 				addresses[curFromAddr] = transaction.From
 			}
@@ -79,7 +77,6 @@ func main() {
 			log.Println("20 blocks processed")
 		}
 	}
-
 	log.Println("Total addresses count: ", len(balances))
 
 	var maxAddr uint32 = 0
@@ -90,7 +87,6 @@ func main() {
 			maxAddr = address
 		}
 	}
-
 	log.Println("Address with most changed balance: ", addresses[maxAddr])
 }
 
