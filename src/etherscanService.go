@@ -75,3 +75,31 @@ request:
 	}
 	return data["result"]
 }
+
+func getSampleBlock() Block {
+	s := "{\"number\":\"0x10d4f\",\"transactions\":[" +
+		"{\"from\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\"," +
+		"\"to\":\"0xbf3403210f9802205f426759947a80a9fda71b1e\",\"value\":\"0x1\"}," +
+
+		"{\"from\":\"0xbf3403210f9802205f426759947a80a9fda23123\"," +
+		"\"to\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\",\"value\":\"0x2\"}," +
+
+		"{\"from\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\"," +
+		"\"to\":\"0x00000000b7ca7e12dcc72290d1fe47b2ef14c607\",\"value\":\"0xa\"}," +
+
+		"{\"from\":\"0xbf3403210f9802205f426759947a80a9fda23123\"," +
+		"\"to\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\",\"value\":\"0x100\"}," +
+
+		"{\"from\":\"0xbf3403210f9802205f426759947a80a9fda71b1e\"," +
+		"\"to\":\"0xbf3403210f9802205f426759947a80a9fda23123\",\"value\":\"0x10000000000\"}," +
+
+		"{\"from\":\"0x00000000b7ca7e12dcc72290d1fe47b2ef14c607\"," +
+		"\"to\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\",\"value\":\"0x4\"}," +
+
+		"{\"from\":\"0x4458f86353b4740fe9e09071c23a7437640063c9\"," +
+		"\"to\":\"0x00000000b7ca7e12dcc72290d1fe47b2ef14c607\",\"value\":\"0x0\"}]}"
+	var block Block
+	json.Unmarshal([]byte(s), &block)
+
+	return block
+}

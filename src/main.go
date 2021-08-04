@@ -13,15 +13,22 @@ var balances = make(map[uint32]*Counter)
 
 func main() {
 	log.Println("Program has started\nFetching last blocks...")
+	maxAddr := GetMostChangedAddress()
+	log.Println("Address with most changed balance: ", addresses[maxAddr])
+}
+
+func GetMostChangedAddress() uint32 {
 	lastBlockNumber := getLastBlockNumber()
 	last, err := strconv.ParseInt(lastBlockNumber, 0, 64)
 	if err != nil {
 		panic(err)
 	}
 
-	for i := last - 99; i <= last; i++ {
+	var maxAddr uint32 = 0
+	for i := last - 19; i <= last; i++ {
 		curTag := fmt.Sprintf("0x%x\n", i)
 		curBlock := getBlockByTag(curTag)
+		//curBlock := getSampleBlock()
 		for _, transaction := range curBlock.Transactions {
 			curFromAddr := hash(transaction.From)
 			curToAddr := hash(transaction.To)
@@ -33,6 +40,9 @@ func main() {
 			if curValue.IsZero() {
 				continue
 			}
+
+			//fmt.Println("from: ", curFromAddr, " to: ", curToAddr, " value: ", curValue)
+
 			if _, ok := addresses[curFromAddr]; !ok {
 				addresses[curFromAddr] = transaction.From
 			}
@@ -73,21 +83,25 @@ func main() {
 			}
 		}
 
-		if (last-100-i)%20 == 0 {
-			log.Println("20 blocks processed")
-		}
-	}
-	log.Println("Total addresses count: ", len(balances))
+		//	if (last-100-i)%20 == 0 {
+		//		log.Println("20 blocks processed")
+		//	}
+		//}
+		log.Println("Total addresses count: ", len(balances))
 
-	var maxAddr uint32 = 0
-	bufValue := uint256.NewInt(0)
-	for address, counter := range balances {
-		if counter.value.Cmp(bufValue) == 1 {
-			bufValue = counter.value
-			maxAddr = address
+		//for m, n := range balances {
+		//	fmt.Println(m, ": ", n.value)
+		//}
+
+		bufValue := uint256.NewInt(0)
+		for address, counter := range balances {
+			if counter.value.Cmp(bufValue) == 1 {
+				bufValue = counter.value
+				maxAddr = address
+			}
 		}
 	}
-	log.Println("Address with most changed balance: ", addresses[maxAddr])
+	return maxAddr
 }
 
 func hash(s string) uint32 {
